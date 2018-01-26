@@ -26,6 +26,8 @@ using UnityEngine;
 using KSP.IO;
 using KSP.UI;
 using KSP.UI.Screens;
+using System.Diagnostics;
+using ToolbarControl_NS;
 
 namespace PartAngleDisplay
 {
@@ -65,8 +67,8 @@ namespace PartAngleDisplay
         Int32 windowID;
         Rect windowPos;
         Rect windowDragRect;
-        ApplicationLauncherButton buttonAppLaunch = null;
-        IButton buttonToolbar = null;
+        //ApplicationLauncherButton buttonAppLaunch = null;
+        //IButton buttonToolbar = null;
         EditorLogic editor;
         GUIStyle windowStyle;
         GUIStyle areaStyle;
@@ -104,12 +106,17 @@ namespace PartAngleDisplay
 
         static float[] angleCycle = { 0.01f, 0.1f, 1, 5, 10, 15, 30, 45, 60, 72, 90, 120 };
         static String[] angleCycleStr = { "0.01", "0.10", "1.00", "5.00", "10.00", "15.00", "30.00", "45.00", "60.00", "72.00", "90.00", "120.00" };
-        static Texture2D texAppLaunch;
+        //static Texture2D texAppLaunch;
 
-        const String windowTitle = "Part Angle Display (0.3.2.4)";
+        String windowTitle = "Part Angle Display";
         const String configFilename = "settings.cfg";
-        const String pathToolbarDisabled = "PartAngleDisplay/toolbaroff";
-        const String pathToolbarEnabled = "PartAngleDisplay/toolbaron";
+        //const String pathToolbarDisabled = "PartAngleDisplay/Icons/toolbaroff_24";
+        //const String pathToolbarEnabled = "PartAngleDisplay/Icons/toolbaron_24";
+
+        private const string BlizzyToolbarIconActive = "PartAngleDisplay/Icons/toolbaron_24";
+        private const string BlizzyToolbarIconInactive = "PartAngleDisplay/Icons/toolbaroff_24";
+        private const string StockToolbarIconActive = "PartAngleDisplay/Icons/applaunchon_32";
+        private const string StockToolbarIconInactive = "PartAngleDisplay/Icons/applaunchoff_32";
 
         private Boolean _Visible = false;
 
@@ -148,11 +155,31 @@ namespace PartAngleDisplay
             Log.Flush();
         }
 
+        string GetAssemblyVersion()
+        {
+            foreach (AssemblyLoader.LoadedAssembly mod in AssemblyLoader.loadedAssemblies)
+            {
+
+                if (string.IsNullOrEmpty(mod.assembly.Location)) //Diazo Edit for xEvilReeperx AssemblyReloader mod
+                    continue;
+
+                FileVersionInfo fileVersionInfo = FileVersionInfo.GetVersionInfo(mod.assembly.Location);
+
+                AssemblyName assemblyName = mod.assembly.GetName();
+                if (assemblyName.Name == "PartAngleDisplay")
+                {
+                    return assemblyName.Version.ToString();
+                }
+            }
+            return "";
+        }
+        ToolbarControl toolbarControl;
         public void Start()
         {
             //Trace("[PAD] EditorWindow.Start");
             //Trace("ApplicationLauncher is " + (ApplicationLauncher.Ready ? "" : "not ") + "ready");
 
+#if false
             if (ToolbarManager.ToolbarAvailable)
             {
                 buttonToolbar = ToolbarManager.Instance.add("PAD", "button");
@@ -161,9 +188,26 @@ namespace PartAngleDisplay
                 buttonToolbar.OnClick += e => ToggleWindow();
                 buttonToolbar.Visible = true;
             }
+#endif
+            toolbarControl = gameObject.AddComponent<ToolbarControl>();
+            toolbarControl.UseBlizzy(HighLogic.CurrentGame.Parameters.CustomParams<PAD>().useBlizzy);
+            toolbarControl.AddToAllToolbars(ToggleWindow, ToggleWindow,
+                      ApplicationLauncher.AppScenes.VAB |
+                      ApplicationLauncher.AppScenes.SPH,
+                      "PartAngleDisplay",
+                      "PADButton",
+                      StockToolbarIconInactive,
+                      StockToolbarIconActive,
+                      BlizzyToolbarIconInactive,
+                      BlizzyToolbarIconActive,
 
+                      "Part Angle Display"
+              );
+           
             Visible = startVisible;
             Log.Flush();
+
+            windowTitle += " (" + GetAssemblyVersion() + ")";
         }
 
         void OnDestroy()
@@ -173,6 +217,7 @@ namespace PartAngleDisplay
 
             SaveConfig();
 
+#if false
             if (buttonAppLaunch != null)
             {
                 ApplicationLauncher.Instance.RemoveModApplication(buttonAppLaunch);
@@ -184,6 +229,10 @@ namespace PartAngleDisplay
                 buttonToolbar.Destroy();
                 buttonToolbar = null;
             }
+#endif
+            toolbarControl.OnDestroy();
+            Destroy(toolbarControl);
+
             Log.Flush();
         }
 
@@ -314,6 +363,7 @@ namespace PartAngleDisplay
 
         public void Update()
         {
+#if false
             if (useAppLaunch && buttonAppLaunch == null)
             {
                 if (ApplicationLauncher.Ready)
@@ -343,7 +393,7 @@ namespace PartAngleDisplay
 
             SetAppLaunchState();
             SetToolbarState();
-
+#endif
             // Main Update code starts here
 
             editor = EditorLogic.fetch;
@@ -482,6 +532,8 @@ namespace PartAngleDisplay
 
         private void OnGUI()
         {
+            //if (toolbarControl != null)
+            //    toolbarControl.UseBlizzy(HighLogic.CurrentGame.Parameters.CustomParams<PAD>().useBlizzy);
             if (Visible)
                 windowPos = GUI.Window(windowID, windowPos, windowFunc, windowTitle, windowStyle);
         }
@@ -683,9 +735,10 @@ namespace PartAngleDisplay
             rLabPartRel.Set(LabelX, yRow, LabelPartRelWidth, LabelHeight);
             rButPartRel.Set(ButPartRelX, yRow + ButtonYOff, ButtonWidth, ButtonHeight);
         }
-
+#if false
         private void SetAppLaunchState()
         {
+
             if (buttonAppLaunch != null)
             {
                 if (_Visible && buttonAppLaunch.toggleButton.CurrentState == UIRadioButton.State.False)
@@ -693,14 +746,15 @@ namespace PartAngleDisplay
                 else if (!_Visible && buttonAppLaunch.toggleButton.CurrentState == UIRadioButton.State.True)
                     buttonAppLaunch.SetFalse(false);
             }
-        }
 
-        private void SetToolbarState()
+    }
+
+    private void SetToolbarState()
         {
             if (buttonToolbar != null)
                 buttonToolbar.TexturePath = _Visible ? pathToolbarEnabled : pathToolbarDisabled;
         }
-
+#endif
         private void Trace(String message)
         {
             Log.buf.AppendLine(message);
