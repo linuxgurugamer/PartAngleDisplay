@@ -120,6 +120,8 @@ namespace PartAngleDisplay
 
         private Boolean _Visible = false;
 
+        ToolbarControl toolbarControl;
+
         public EditorWindow()
         {
             //Trace("EditorWindow.EditorWindow");
@@ -173,7 +175,7 @@ namespace PartAngleDisplay
             }
             return "";
         }
-        ToolbarControl toolbarControl;
+       
         public void Start()
         {
             //Trace("[PAD] EditorWindow.Start");
