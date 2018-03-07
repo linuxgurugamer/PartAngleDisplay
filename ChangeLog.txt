@@ -1,4 +1,11 @@
-0.3.3
+
+0.3.3.2
+	Removed ToolbarWrapper.cs
+	Deleted old commented out code for toolbar 
+	Added fix to disable hotkeys while a text field has focus
+
+
+0.3.3.1
 	Adoption by LinuxGuruGamer
 	Moved Changelog into it's own file
 	Added code to dynamically update the title with the correct version

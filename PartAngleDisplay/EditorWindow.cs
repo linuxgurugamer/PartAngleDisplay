@@ -29,6 +29,9 @@ using KSP.UI.Screens;
 using System.Diagnostics;
 using ToolbarControl_NS;
 
+using UnityEngine.UI;
+using UnityEngine.EventSystems;
+
 namespace PartAngleDisplay
 {
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
@@ -67,8 +70,7 @@ namespace PartAngleDisplay
         Int32 windowID;
         Rect windowPos;
         Rect windowDragRect;
-        //ApplicationLauncherButton buttonAppLaunch = null;
-        //IButton buttonToolbar = null;
+
         EditorLogic editor;
         GUIStyle windowStyle;
         GUIStyle areaStyle;
@@ -181,16 +183,6 @@ namespace PartAngleDisplay
             //Trace("[PAD] EditorWindow.Start");
             //Trace("ApplicationLauncher is " + (ApplicationLauncher.Ready ? "" : "not ") + "ready");
 
-#if false
-            if (ToolbarManager.ToolbarAvailable)
-            {
-                buttonToolbar = ToolbarManager.Instance.add("PAD", "button");
-                buttonToolbar.ToolTip = "Part Angle Display";
-                SetToolbarState();
-                buttonToolbar.OnClick += e => ToggleWindow();
-                buttonToolbar.Visible = true;
-            }
-#endif
             toolbarControl = gameObject.AddComponent<ToolbarControl>();
             toolbarControl.UseBlizzy(HighLogic.CurrentGame.Parameters.CustomParams<PAD>().useBlizzy);
             toolbarControl.AddToAllToolbars(ToggleWindow, ToggleWindow,
@@ -219,19 +211,6 @@ namespace PartAngleDisplay
 
             SaveConfig();
 
-#if false
-            if (buttonAppLaunch != null)
-            {
-                ApplicationLauncher.Instance.RemoveModApplication(buttonAppLaunch);
-                buttonAppLaunch = null;
-            }
-
-            if (buttonToolbar != null)
-            {
-                buttonToolbar.Destroy();
-                buttonToolbar = null;
-            }
-#endif
             toolbarControl.OnDestroy();
             Destroy(toolbarControl);
 
@@ -363,39 +342,10 @@ namespace PartAngleDisplay
             }
         }
 
+        bool keysDisabled = false;
         public void Update()
         {
-#if false
-            if (useAppLaunch && buttonAppLaunch == null)
-            {
-                if (ApplicationLauncher.Ready)
-                {
-                    if (texAppLaunch == null)
-                    {
-                        texAppLaunch = new Texture2D(38, 38, TextureFormat.RGBA32, false);
-                        texAppLaunch.LoadImage(System.IO.File.ReadAllBytes(System.IO.Path.Combine(System.IO.Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location), "applaunch.png")));
-                    }
 
-                    buttonAppLaunch = ApplicationLauncher.Instance.AddModApplication(
-                        ToggleWindow,
-                        ToggleWindow,
-                        null,
-                        null,
-                        null,
-                        null,
-                        ApplicationLauncher.AppScenes.VAB | ApplicationLauncher.AppScenes.SPH,
-                        texAppLaunch
-                        );
-                }
-                else
-                {
-                    Trace("ApplicationLauncher is not ready in Update");
-                }
-            }
-
-            SetAppLaunchState();
-            SetToolbarState();
-#endif
             // Main Update code starts here
 
             editor = EditorLogic.fetch;
@@ -405,6 +355,26 @@ namespace PartAngleDisplay
             if (editor.editorScreen != EditorScreen.Parts)
                 return;
 
+            // Ignore keystrokes when a text field has focus (e.g. part search, craft title box)
+            GameObject obj = EventSystem.current.currentSelectedGameObject;
+
+            bool inputFieldIsFocused = (obj != null && obj.GetComponent<TMPro.TMP_InputField>() != null && obj.GetComponent<TMPro.TMP_InputField>().isFocused);
+
+           // bool inputFieldIsFocused = (obj != null && obj.GetComponent<InputField>() != null && obj.GetComponent<InputField>().isFocused);
+            if (inputFieldIsFocused)
+            {
+                UnityEngine.Debug.Log("Input field is focused, disabling keys");
+
+                keysDisabled = true;
+                return;
+            } else
+            {
+                if (keysDisabled)
+                {
+                    UnityEngine.Debug.Log("Input field lost focus, enabling keys");
+                    keysDisabled = false;
+                }
+            }
             Part part = EditorLogic.SelectedPart;
 
             // Remember the previous values
@@ -554,31 +524,31 @@ namespace PartAngleDisplay
             GUI.Label(rLabIncP, "Pitch +/-", labelStyle);
             if (GUI.Button(rResetIncP, "x", buttonStyle))
                 sIncPitch = "0.0";
-            sIncPitch = GUI.TextField(rValIncP, sIncPitch, 7, GetDataStyle(sIncPitch));
+            sIncPitch = GUI.TextField(rValIncP, sIncPitch, 7); //  , GetDataStyle(sIncPitch));
 
             GUI.Label(rLabIncR, "Roll +/-", labelStyle);
             if (GUI.Button(rResetIncR, "x", buttonStyle))
                 sIncRoll = "0.0";
-            sIncRoll = GUI.TextField(rValIncR, sIncRoll, 7, GetDataStyle(sIncRoll));
+            sIncRoll = GUI.TextField(rValIncR, sIncRoll, 7); //  , GetDataStyle(sIncRoll));
 
             GUI.Label(rLabIncY, "Yaw +/-", labelStyle);
             if (GUI.Button(rResetIncY, "x", buttonStyle))
                 sIncYaw = "0.0";
-            sIncYaw = GUI.TextField(rValIncY, sIncYaw, 7, GetDataStyle(sIncYaw));
+            sIncYaw = GUI.TextField(rValIncY, sIncYaw, 7); //  , GetDataStyle(sIncYaw));
 
             GUI.Label(rLabRot, "Rotation", labelStyle);
             if (GUI.Button(rIncRot, "<", buttonStyle))
                 sIncCoarse = IncreaseRotate(sIncCoarse);
             if (GUI.Button(rDecRot, ">", buttonStyle))
                 sIncCoarse = DecreaseRotate(sIncCoarse);
-            sIncCoarse = GUI.TextField(rValRot, sIncCoarse, 7, GetDataStyle(sIncCoarse));
+            sIncCoarse = GUI.TextField(rValRot, sIncCoarse, 7); //  , GetDataStyle(sIncCoarse));
 
             GUI.Label(rLabFine, "Fine", labelStyle);
             if (GUI.Button(rIncFine, "<", buttonStyle))
                 sIncFine = IncreaseRotate(sIncFine);
             if (GUI.Button(rDecFine, ">", buttonStyle))
                 sIncFine = DecreaseRotate(sIncFine);
-            sIncFine = GUI.TextField(rValFine, sIncFine, 7, GetDataStyle(sIncFine));
+            sIncFine = GUI.TextField(rValFine, sIncFine, 7); //  , GetDataStyle(sIncFine));
 
             GUI.Label(rLabPartRel, "Part-relative", labelStyle);
             relativeRotate = GUI.Toggle(rButPartRel, relativeRotate, "", buttonStyle);
@@ -737,26 +707,7 @@ namespace PartAngleDisplay
             rLabPartRel.Set(LabelX, yRow, LabelPartRelWidth, LabelHeight);
             rButPartRel.Set(ButPartRelX, yRow + ButtonYOff, ButtonWidth, ButtonHeight);
         }
-#if false
-        private void SetAppLaunchState()
-        {
 
-            if (buttonAppLaunch != null)
-            {
-                if (_Visible && buttonAppLaunch.toggleButton.CurrentState == UIRadioButton.State.False)
-                    buttonAppLaunch.SetTrue(false);
-                else if (!_Visible && buttonAppLaunch.toggleButton.CurrentState == UIRadioButton.State.True)
-                    buttonAppLaunch.SetFalse(false);
-            }
-
-    }
-
-    private void SetToolbarState()
-        {
-            if (buttonToolbar != null)
-                buttonToolbar.TexturePath = _Visible ? pathToolbarEnabled : pathToolbarDisabled;
-        }
-#endif
         private void Trace(String message)
         {
             Log.buf.AppendLine(message);
