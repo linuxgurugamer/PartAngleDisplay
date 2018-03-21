@@ -1,8 +1,12 @@
+0.3.3.3
+	Added ClickthroughBlocker support
+	Updated for 1.4.1
 
 0.3.3.2
 	Removed ToolbarWrapper.cs
 	Deleted old commented out code for toolbar 
 	Added fix to disable hotkeys while a text field has focus
+	Changed style of input fields so they are obviously input fields
 
 
 0.3.3.1

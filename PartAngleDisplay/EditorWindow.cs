@@ -28,6 +28,7 @@ using KSP.UI;
 using KSP.UI.Screens;
 using System.Diagnostics;
 using ToolbarControl_NS;
+using ClickThroughFix;
 
 using UnityEngine.UI;
 using UnityEngine.EventSystems;
@@ -507,7 +508,7 @@ namespace PartAngleDisplay
             //if (toolbarControl != null)
             //    toolbarControl.UseBlizzy(HighLogic.CurrentGame.Parameters.CustomParams<PAD>().useBlizzy);
             if (Visible)
-                windowPos = GUI.Window(windowID, windowPos, windowFunc, windowTitle, windowStyle);
+                windowPos = ClickThruBlocker.GUIWindow(windowID, windowPos, windowFunc, windowTitle, windowStyle);
         }
 
         private void WindowGUI(int windowID)
