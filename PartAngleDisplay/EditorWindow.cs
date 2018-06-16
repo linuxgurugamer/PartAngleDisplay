@@ -35,6 +35,16 @@ using UnityEngine.EventSystems;
 
 namespace PartAngleDisplay
 {
+
+    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
+    public class RegisterToolbar : MonoBehaviour
+    {
+        void Start()
+        {
+            ToolbarControl.RegisterMod(EditorWindow.MODID, EditorWindow.MODNAME);
+        }
+    }
+
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     public class EditorWindow : MonoBehaviour
     {
@@ -178,25 +188,25 @@ namespace PartAngleDisplay
             }
             return "";
         }
-       
+        internal const string MODID = "PartAngleDisplay_NS";
+        internal const string MODNAME = "Part Angle Display";
         public void Start()
         {
             //Trace("[PAD] EditorWindow.Start");
             //Trace("ApplicationLauncher is " + (ApplicationLauncher.Ready ? "" : "not ") + "ready");
 
             toolbarControl = gameObject.AddComponent<ToolbarControl>();
-            toolbarControl.UseBlizzy(HighLogic.CurrentGame.Parameters.CustomParams<PAD>().useBlizzy);
             toolbarControl.AddToAllToolbars(ToggleWindow, ToggleWindow,
                       ApplicationLauncher.AppScenes.VAB |
                       ApplicationLauncher.AppScenes.SPH,
-                      "PartAngleDisplay",
+                      MODID,
                       "PADButton",
                       StockToolbarIconInactive,
                       StockToolbarIconActive,
                       BlizzyToolbarIconInactive,
                       BlizzyToolbarIconActive,
 
-                      "Part Angle Display"
+                      MODNAME
               );
            
             Visible = startVisible;
@@ -505,8 +515,6 @@ namespace PartAngleDisplay
 
         private void OnGUI()
         {
-            //if (toolbarControl != null)
-            //    toolbarControl.UseBlizzy(HighLogic.CurrentGame.Parameters.CustomParams<PAD>().useBlizzy);
             if (Visible)
                 windowPos = ClickThruBlocker.GUIWindow(windowID, windowPos, windowFunc, windowTitle, windowStyle);
         }

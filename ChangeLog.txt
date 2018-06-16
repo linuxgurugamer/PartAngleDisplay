@@ -1,3 +1,8 @@
+0.3.3.4
+	Updated to use latest version of the ToolbarController
+	Removed settings page since it only had a single option for the Blizzy toolbar, now handled by the ToolbarController
+	Updated .version file for all of 1.4
+
 0.3.3.3
 	Added ClickthroughBlocker support
 	Updated for 1.4.1
