@@ -1,5 +1,8 @@
 ChangeLog
 
+0.4.1
+	Added toggle to switch between active (changes value) and inactive (display only)
+
 0.4.0
 	Updated for KSP 1.8
 

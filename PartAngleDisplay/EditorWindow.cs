@@ -36,14 +36,7 @@ using UnityEngine.EventSystems;
 namespace PartAngleDisplay
 {
 
-    [KSPAddon(KSPAddon.Startup.MainMenu, true)]
-    public class RegisterToolbar : MonoBehaviour
-    {
-        void Start()
-        {
-            ToolbarControl.RegisterMod(EditorWindow.MODID, EditorWindow.MODNAME);
-        }
-    }
+
 
     [KSPAddon(KSPAddon.Startup.EditorAny, false)]
     public class EditorWindow : MonoBehaviour
@@ -76,6 +69,8 @@ namespace PartAngleDisplay
         Rect rValFine;
         Rect rLabPartRel;
         Rect rButPartRel;
+        Rect rLabActive;
+        Rect rButActive;
 
         GUI.WindowFunction windowFunc = null;
         Int32 windowID;
@@ -110,6 +105,7 @@ namespace PartAngleDisplay
         bool relativeRotate = false;
         bool absoluteAngles = false;
         bool useAppLaunch = true;
+        bool active = true;
 
         KeyCode keyToggleWindow = KeyCode.P;
         KeyCode keyApplyEuler = KeyCode.P;
@@ -163,7 +159,7 @@ namespace PartAngleDisplay
             CreateUIObjects();
 
             LayoutWindow();
-            
+
             windowID = Guid.NewGuid().GetHashCode();
 
             LoadConfig();
@@ -208,7 +204,7 @@ namespace PartAngleDisplay
 
                       MODNAME
               );
-           
+
             Visible = startVisible;
             Log.Flush();
 
@@ -256,6 +252,8 @@ namespace PartAngleDisplay
                             sIncFine = val;
                         else if (key == "relRotate")
                             ReadBool(val, ref relativeRotate);
+                        else if (key == "active")
+                            ReadBool(val, ref active);
                         else if (key == "absAngles")
                             ReadBool(val, ref absoluteAngles);
                         else if (key == "windowPos")
@@ -303,6 +301,7 @@ namespace PartAngleDisplay
             file.WriteLine("incCoarse = " + sIncCoarse);
             file.WriteLine("incFine = " + sIncFine);
             file.WriteLine("relRotate = " + (relativeRotate ? "true" : "false"));
+            file.WriteLine("active = " + (active ? "true" : "false"));
             file.WriteLine("absAngles = " + (absoluteAngles ? "true" : "false"));
             file.WriteLine("windowPos = {0:f},{1:f},{2:f},{3:f}", windowPos.x, windowPos.y, windowPos.width, windowPos.height);
             file.WriteLine("keyToggleWindow = " + keyToggleWindow);
@@ -371,14 +370,15 @@ namespace PartAngleDisplay
 
             bool inputFieldIsFocused = (obj != null && obj.GetComponent<TMPro.TMP_InputField>() != null && obj.GetComponent<TMPro.TMP_InputField>().isFocused);
 
-           // bool inputFieldIsFocused = (obj != null && obj.GetComponent<InputField>() != null && obj.GetComponent<InputField>().isFocused);
+            // bool inputFieldIsFocused = (obj != null && obj.GetComponent<InputField>() != null && obj.GetComponent<InputField>().isFocused);
             if (inputFieldIsFocused)
             {
                 UnityEngine.Debug.Log("Input field is focused, disabling keys");
 
                 keysDisabled = true;
                 return;
-            } else
+            }
+            else
             {
                 if (keysDisabled)
                 {
@@ -497,7 +497,7 @@ namespace PartAngleDisplay
 
         private bool ShouldRotateKeysWork()
         {
-            return (editor.EditorConstructionMode == ConstructionMode.Place);
+            return (editor.EditorConstructionMode == ConstructionMode.Place && active);
         }
 
         private void HandleCycleKey(KeyCode keyCode, bool shiftDown, bool modDown, ref String incValue)
@@ -513,54 +513,71 @@ namespace PartAngleDisplay
             }
         }
 
+        const float activeHeight = 6 * RowHeight;
         private void OnGUI()
         {
             if (Visible)
-                windowPos = ClickThruBlocker.GUIWindow(windowID, windowPos, windowFunc, windowTitle, windowStyle);
+            {
+                windowPos.height = active ? WndHeight : WndHeight - activeHeight;
+
+                //                windowPos = ClickThruBlocker.GUIWindow(windowID, windowPos, windowFunc, windowTitle, windowStyle);
+                windowPos = ClickThruBlocker.GUIWindow(windowID, windowPos, WindowGUI, windowTitle, windowStyle);
+            }
         }
 
         private void WindowGUI(int windowID)
         {
+            rArea.Set(5, 27, 190, active ? 193 : 193 - activeHeight);
+
             GUI.Box(rArea, GUIContent.none, areaStyle);
-            
+
             GUI.Label(rLabAngleP, "Pitch", labelStyle);
             GUI.Label(rValAngleP, sPitch, dataStyle);
             GUI.Label(rLabAngleR, "Roll", labelStyle);
             GUI.Label(rValAngleR, sRoll, dataStyle);
             GUI.Label(rLabAngleY, "Yaw", labelStyle);
             GUI.Label(rValAngleY, sYaw, dataStyle);
+            if (active)
+            {
+                GUI.Label(rLabIncP, "Pitch +/-", labelStyle);
+                if (GUI.Button(rResetIncP, "x", buttonStyle))
+                    sIncPitch = "0.0";
+                sIncPitch = GUI.TextField(rValIncP, sIncPitch, 7); //  , GetDataStyle(sIncPitch));
 
-            GUI.Label(rLabIncP, "Pitch +/-", labelStyle);
-            if (GUI.Button(rResetIncP, "x", buttonStyle))
-                sIncPitch = "0.0";
-            sIncPitch = GUI.TextField(rValIncP, sIncPitch, 7); //  , GetDataStyle(sIncPitch));
+                GUI.Label(rLabIncR, "Roll +/-", labelStyle);
+                if (GUI.Button(rResetIncR, "x", buttonStyle))
+                    sIncRoll = "0.0";
+                sIncRoll = GUI.TextField(rValIncR, sIncRoll, 7); //  , GetDataStyle(sIncRoll));
 
-            GUI.Label(rLabIncR, "Roll +/-", labelStyle);
-            if (GUI.Button(rResetIncR, "x", buttonStyle))
-                sIncRoll = "0.0";
-            sIncRoll = GUI.TextField(rValIncR, sIncRoll, 7); //  , GetDataStyle(sIncRoll));
+                GUI.Label(rLabIncY, "Yaw +/-", labelStyle);
+                if (GUI.Button(rResetIncY, "x", buttonStyle))
+                    sIncYaw = "0.0";
+                sIncYaw = GUI.TextField(rValIncY, sIncYaw, 7); //  , GetDataStyle(sIncYaw));
 
-            GUI.Label(rLabIncY, "Yaw +/-", labelStyle);
-            if (GUI.Button(rResetIncY, "x", buttonStyle))
-                sIncYaw = "0.0";
-            sIncYaw = GUI.TextField(rValIncY, sIncYaw, 7); //  , GetDataStyle(sIncYaw));
+                GUI.Label(rLabRot, "Rotation", labelStyle);
+                if (GUI.Button(rIncRot, "<", buttonStyle))
+                    sIncCoarse = IncreaseRotate(sIncCoarse);
+                if (GUI.Button(rDecRot, ">", buttonStyle))
+                    sIncCoarse = DecreaseRotate(sIncCoarse);
+                sIncCoarse = GUI.TextField(rValRot, sIncCoarse, 7); //  , GetDataStyle(sIncCoarse));
 
-            GUI.Label(rLabRot, "Rotation", labelStyle);
-            if (GUI.Button(rIncRot, "<", buttonStyle))
-                sIncCoarse = IncreaseRotate(sIncCoarse);
-            if (GUI.Button(rDecRot, ">", buttonStyle))
-                sIncCoarse = DecreaseRotate(sIncCoarse);
-            sIncCoarse = GUI.TextField(rValRot, sIncCoarse, 7); //  , GetDataStyle(sIncCoarse));
+                GUI.Label(rLabFine, "Fine", labelStyle);
+                if (GUI.Button(rIncFine, "<", buttonStyle))
+                    sIncFine = IncreaseRotate(sIncFine);
+                if (GUI.Button(rDecFine, ">", buttonStyle))
+                    sIncFine = DecreaseRotate(sIncFine);
+                sIncFine = GUI.TextField(rValFine, sIncFine, 7); //  , GetDataStyle(sIncFine));
 
-            GUI.Label(rLabFine, "Fine", labelStyle);
-            if (GUI.Button(rIncFine, "<", buttonStyle))
-                sIncFine = IncreaseRotate(sIncFine);
-            if (GUI.Button(rDecFine, ">", buttonStyle))
-                sIncFine = DecreaseRotate(sIncFine);
-            sIncFine = GUI.TextField(rValFine, sIncFine, 7); //  , GetDataStyle(sIncFine));
+                GUI.Label(rLabPartRel, "Part-relative", labelStyle);
+                relativeRotate = GUI.Toggle(rButPartRel, relativeRotate, "", buttonStyle);
+            }
+            rLabActive.y = active ? yRow : yRow - activeHeight;
 
-            GUI.Label(rLabPartRel, "Part-relative", labelStyle);
-            relativeRotate = GUI.Toggle(rButPartRel, relativeRotate, "", buttonStyle);
+            rButActive.y = active ? yRow + ButtonYOff : yRow + ButtonYOff - activeHeight;
+
+
+            GUI.Label(rLabActive, "Active", labelStyle);
+            active = GUI.Toggle(rButActive, active, "", buttonStyle);
 
             GUI.DragWindow(windowDragRect);
         }
@@ -650,30 +667,32 @@ namespace PartAngleDisplay
             };
         }
 
+        const int WndHeight = 220;
+        const int RowHeight = 18;
+        const int TopMargin = 28;
+        const int LabelX = 12;
+        const int LabelWidth = 60;
+        const int ValueX = 128;
+        const int ValueWidth = 60;
+        const int Button1X = 70;
+        const int Button2X = 90;
+        const int LabelPartRelWidth = 100;
+        const int ButPartRelX = 168;
+        const int LabelHeight = 20;
+        const int ButtonWidth = 20;
+        const int ButtonHeight = 16;
+        const int ButtonYOff = 3;
+        const int WndWidth = 200;
+
+        int yRow;
         private void LayoutWindow()
         {
-            const int TopMargin = 28;
-            const int LabelX = 12;
-            const int LabelWidth = 60;
-            const int ValueX = 128;
-            const int ValueWidth = 60;
-            const int Button1X = 70;
-            const int Button2X = 90;
-            const int LabelPartRelWidth = 100;
-            const int ButPartRelX = 168;
-            const int LabelHeight = 20;
-            const int ButtonWidth = 20;
-            const int ButtonHeight = 16;
-            const int ButtonYOff = 3;
-            const int RowHeight = 18;
-            const int WndWidth = 200;
-            const int WndHeight = 200;
 
             windowPos.Set(300, 200, WndWidth, WndHeight);
             windowDragRect.Set(0, 0, WndWidth, WndHeight);
-            rArea.Set(5, 27, 190, 168);
+            rArea.Set(5, 27, 190, 193);
 
-            int yRow = TopMargin;
+            yRow = TopMargin;
             rLabAngleP.Set(LabelX, yRow, LabelWidth, LabelHeight);
             rValAngleP.Set(ValueX, yRow, ValueWidth, LabelHeight);
 
@@ -715,6 +734,11 @@ namespace PartAngleDisplay
             yRow += RowHeight;
             rLabPartRel.Set(LabelX, yRow, LabelPartRelWidth, LabelHeight);
             rButPartRel.Set(ButPartRelX, yRow + ButtonYOff, ButtonWidth, ButtonHeight);
+
+            yRow += RowHeight;
+            rLabActive.Set(LabelX, yRow, LabelPartRelWidth, LabelHeight);
+            rButActive.Set(ButPartRelX, yRow + ButtonYOff, ButtonWidth, ButtonHeight);
+
         }
 
         private void Trace(String message)
